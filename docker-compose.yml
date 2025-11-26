@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: capybara-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=capybara_ids
+    networks:
+      - capybara-network
+
+  backend:
+    build: ./backend
+    container_name: capybara-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - NETWORK_INTERFACE=eth0
+    depends_on:
+      - mongodb
+    networks:
+      - capybara-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: capybara-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - capybara-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+networks:
+  capybara-network:
+    driver: bridge
