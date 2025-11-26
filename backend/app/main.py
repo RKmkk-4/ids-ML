@@ -22,8 +22,8 @@ logger = logging.getLogger("capybara-ids")
 async def lifespan(app: FastAPI):
     # Démarrage
     app.state.mongodb = MongoDB()
-    app.state.packet_capture = PacketCapture(app.state.mongodb)
     app.state.ws_manager = ConnectionManager()
+    app.state.packet_capture = PacketCapture(app.state.mongodb, app.state.ws_manager)
     
     # Démarrer la capture en arrière-plan
     asyncio.create_task(app.state.packet_capture.start_capture())
@@ -51,13 +51,12 @@ app.add_middleware(
 )
 
 # Routes API
-from .routes import alerts, flows, stats, config
+from .routes import alert, flows, stats, config
 
-app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
+app.include_router(alert.router, prefix="/api/v1/alerts", tags=["alerts"])
 app.include_router(flows.router, prefix="/api/v1/flows", tags=["flows"])
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
 app.include_router(config.router, prefix="/api/v1/config", tags=["config"])
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await app.state.ws_manager.connect(websocket)

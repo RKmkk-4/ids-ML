@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from scapy.all import *
 from scapy.layers.inet import IP, TCP, UDP, ICMP
 import json
@@ -7,9 +8,12 @@ from datetime import datetime
 from .ml.detector import MLDetector
 from .rules.detector import RuleDetector
 
+logger = logging.getLogger("capybara-ids")
+
 class PacketCapture:
-    def __init__(self, mongodb):
+    def __init__(self, mongodb, ws_manager=None):
         self.mongodb = mongodb
+        self.ws_manager = ws_manager
         self.is_capturing = False
         self.packet_count = 0
         self.ml_detector = MLDetector()
@@ -51,6 +55,18 @@ class PacketCapture:
             if flow_data:
                 # Sauvegarder le flow
                 await self.mongodb.insert_flow(flow_data)
+                
+                # Broadcaster le packet via WebSocket (pour console frontend)
+                if self.ws_manager:
+                    await self.ws_manager.broadcast({
+                        'type': 'packet',
+                        'data': {
+                            'src_ip': flow_data['src_ip'],
+                            'dst_ip': flow_data['dst_ip'],
+                            'protocol': flow_data['protocol'],
+                            'length': flow_data['length']
+                        }
+                    })
                 
                 # Détection par règles
                 rule_alerts = self.rule_detector.detect(packet, flow_data)
@@ -116,5 +132,12 @@ class PacketCapture:
         # Sauvegarder en base
         await self.mongodb.insert_alert(alert_data)
         
-        # Notifier via WebSocket
-        # (implémenté plus tard)
+        # Notifier via WebSocket - AJOUT
+        try:
+            if hasattr(self, 'ws_manager') and self.ws_manager:
+                await self.ws_manager.broadcast({
+                    'type': 'new_alert',
+                    'data': alert_data
+                })
+        except Exception as e:
+            logging.error(f"Erreur broadcast WebSocket: {e}")

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Dashboard from '../views/Dashboard.vue'
+import Dashboard from '../Views/Dashboard.vue'
 
 const routes = [
   {
@@ -10,22 +10,22 @@ const routes = [
   {
     path: '/alerts',
     name: 'Alerts',
-    component: () => import('../views/Alerts.vue')
+    component: () => import('../Views/Alerts.vue')
   },
   {
     path: '/flows',
     name: 'Flows',
-    component: () => import('../views/Flows.vue')
+    component: () => import('../Views/Flows.vue')
   },
   {
     path: '/stats',
     name: 'Statistics',
-    component: () => import('../views/Statistics.vue')
+    component: () => import('../Views/Statistics.vue')
   },
   {
     path: '/config',
     name: 'Configuration',
-    component: () => import('../views/Configuration.vue')
+    component: () => import('../Views/Configuration.vue')
   }
 ]
 
