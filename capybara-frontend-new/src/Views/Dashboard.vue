@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.vue'
 import WorldMap from '../components/WorldMap.vue'
 import SeverityChart from '../components/SeverityChart.vue'
 import AlertList from '../components/AlertList.vue'
+import PacketConsole from '../components/PacketConsole.vue'
 
 const API_URL = 'http://localhost:8000/api/v1'
 
@@ -23,6 +24,8 @@ const severityData = ref([
 ])
 
 const recentAlerts = ref([])
+const apiError = ref(false)
+const errorMessage = ref('')
 
 let interval: number
 
@@ -30,30 +33,14 @@ async function fetchAlerts() {
   try {
     const response = await axios.get(`${API_URL}/alerts/`)
     recentAlerts.value = response.data.alerts
+    apiError.value = false
     
-    // Mettre à jour les compteurs de sévérité
     updateSeverityCounts(response.data.alerts)
   } catch (error) {
     console.error('Erreur API alerts:', error)
-    // Données simulées en fallback
-    recentAlerts.value = [
-      {
-        id: '1',
-        type: 'SYN Flood',
-        severity: 'HIGH', 
-        src_ip: '192.168.1.100',
-        description: 'SYN flood détecté: 150 SYN/s',
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: '2', 
-        type: 'Port Scan',
-        severity: 'MEDIUM',
-        src_ip: '10.0.0.50',
-        description: 'Scan de ports détecté: 45 ports différents',
-        timestamp: new Date(Date.now() - 300000).toISOString()
-      }
-    ]
+    apiError.value = true
+    errorMessage.value = 'Impossible de se connecter au backend'
+    recentAlerts.value = []
     updateSeverityCounts(recentAlerts.value)
   }
 }
@@ -62,13 +49,15 @@ async function fetchStats() {
   try {
     const response = await axios.get(`${API_URL}/stats/real-time`)
     stats.value = response.data
+    apiError.value = false
   } catch (error) {
     console.error('Erreur API stats:', error)
-    // Stats simulées en fallback
+    apiError.value = true
+    errorMessage.value = 'Backend déconnecté'
     stats.value = {
-      totalPackets: 12542,
-      totalAlerts: recentAlerts.value.length,
-      packetsPerSecond: Math.floor(Math.random() * 100) + 20,
+      totalPackets: 0,
+      totalAlerts: 0,
+      packetsPerSecond: 0,
       isCapturing: false
     }
   }

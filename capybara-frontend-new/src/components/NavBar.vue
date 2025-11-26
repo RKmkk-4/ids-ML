@@ -30,8 +30,9 @@
           >
             {{ darkMode ? '☀️' : '🌙' }}
           </button>
-          <div class="text-sm text-gray-500 dark:text-gray-400">
-            Status: <span class="font-medium text-green-600">En ligne</span>
+          <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span :class="captureStatus ? 'bg-green-500' : 'bg-red-500'" class="w-2 h-2 rounded-full animate-pulse"></span>
+            <span class="font-medium">{{ captureStatus ? 'En ligne' : 'Hors ligne' }}</span>
           </div>
         </div>
       </div>
@@ -41,8 +42,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
 const darkMode = ref(false)
+const captureStatus = ref(false)
+
+async function checkCaptureStatus() {
+  try {
+    const response = await axios.get('http://localhost:8000/api/v1/stats/real-time')
+    captureStatus.value = response.data.is_capturing
+  } catch (e) {
+    captureStatus.value = false
+  }
+}
 
 const navigation = [
   { name: 'Dashboard', to: '/' },
@@ -68,5 +80,7 @@ onMounted(() => {
   if (darkMode.value) {
     document.documentElement.classList.add('dark')
   }
+  checkCaptureStatus()
+  setInterval(checkCaptureStatus, 5000)
 })
 </script>

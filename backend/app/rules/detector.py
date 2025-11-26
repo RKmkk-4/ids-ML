@@ -1,6 +1,7 @@
 from collections import defaultdict
 import time
 from datetime import datetime
+from scapy.layers.inet import IP, TCP
 
 class RuleDetector:
     def __init__(self):
